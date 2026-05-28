@@ -1,0 +1,7 @@
+Into the, "Database Schema (Flyway Migration)"
+Let's do one thing , this frontend, I've been making is just a collection of landing pages,
+The real thing is a student's administration system, where the parent can see the student's results on different subjects, he/she can request for permission to take his kid via the app, see the student's remaining tuition fees and see if the tuition fees are paid or not , see the student's control number, class attendance, there is also a system to track the discipline points of the students, on deduction a privileged user (Dorm master/Administrator/(Super admin|For dev)) and it 
+The parent can also see a report card for the student's annual result and previous years and there are 4 quarters in a year. The parent can also see a graph of the student's marks and grades as of now, project marks, class engagement marks.
+The student will only be able to see his results and rankings on those specific results.
+The Superadmin can make any changes he/she wants
+Make an SQL for this so far and tell me each and every important part
