@@ -5,8 +5,7 @@ import { TamaguiRoot } from "@/components/tamagui-root";
 import { Colors } from "@/constants/theme";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs, router } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
     Image,
     LayoutChangeEvent,
@@ -15,11 +14,10 @@ import {
     TouchableOpacity,
     View,
     useColorScheme,
+    useWindowDimensions,
 } from "react-native";
 import {
     GestureHandlerRootView,
-    PanGestureHandler,
-    State,
 } from "react-native-gesture-handler";
 import Animated, {
     useAnimatedStyle,
@@ -27,9 +25,14 @@ import Animated, {
     withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TabView, SceneMap } from "react-native-tab-view";
+import ExploreScreen from "./explore";
+import HomeScreen from "./index";
+import SmartScreen from "./smart";
+import ProfileScreen from "./profile";
 
 /* ── FloatingTabBar (liquid glass meniscus) ── */
-function FloatingTabBar({ state, navigation }: any) {
+function FloatingTabBar({ state, setIndex }: any) {
   const scheme = useColorScheme();
   const colors = Colors[scheme === "unspecified" ? "light" : scheme];
   const [barWidth, setBarWidth] = useState(0);
@@ -39,8 +42,6 @@ function FloatingTabBar({ state, navigation }: any) {
   const totalSlots = numberOfTabs + 1; // menu + tabs
   const INDICATOR_W = 48;
   const INDICATOR_H = 36;
-  const BAR_H = 60;
-  const BORDER_PAD = 1.5;
 
   const slotWidth = barWidth > 0 ? barWidth / totalSlots : 0;
   const activeIndex = state.index;
@@ -94,13 +95,13 @@ function FloatingTabBar({ state, navigation }: any) {
     setTimeout(() => {
       switch (action) {
         case "about":
-          router.push("/explore");
+          setIndex(0);
           break;
         case "settings":
-          router.push("/profile");
+          setIndex(3);
           break;
         case "contact":
-          router.push("/smart");
+          setIndex(2);
           break;
         default:
           break;
@@ -110,9 +111,7 @@ function FloatingTabBar({ state, navigation }: any) {
 
   return (
     <SafeAreaView edges={["bottom"]} style={styles.wrapper}>
-      {/* Bar & indicator container */}
       <View style={styles.barContainer}>
-        {/* Glass background */}
         <LinearGradient
           colors={[
             "rgba(255,255,255,0.18)",
@@ -129,9 +128,7 @@ function FloatingTabBar({ state, navigation }: any) {
             style={StyleSheet.absoluteFill}
           />
 
-          {/* Row of slots (menu + tabs) */}
           <View style={styles.slotRow} onLayout={onBarLayout}>
-            {/* Menu trigger */}
             <View style={styles.slot}>
               <TouchableOpacity
                 onPress={() => setMenuOpen(true)}
@@ -151,19 +148,9 @@ function FloatingTabBar({ state, navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {/* Tabs */}
             {state.routes.map((route: any, index: number) => {
               const isFocused = state.index === index;
-              const onPress = () => {
-                const event = navigation.emit({
-                  type: "tabPress",
-                  target: route.key,
-                  canPreventDefault: true,
-                });
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
-                }
-              };
+              const onPress = () => setIndex(index);
 
               return (
                 <View key={route.key} style={styles.slot}>
@@ -173,7 +160,7 @@ function FloatingTabBar({ state, navigation }: any) {
                     activeOpacity={0.6}
                   >
                     <Image
-                      source={iconSource(route.name)}
+                      source={iconSource(route.key)}
                       style={{
                         width: 24,
                         height: 24,
@@ -191,7 +178,6 @@ function FloatingTabBar({ state, navigation }: any) {
           </View>
         </LinearGradient>
 
-        {/* Floating liquid pill */}
         <Animated.View
           style={[
             styles.indicator,
@@ -218,7 +204,6 @@ function FloatingTabBar({ state, navigation }: any) {
         </Animated.View>
       </View>
 
-      {/* Modular glass menu */}
       <GlassMenu
         visible={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -228,91 +213,43 @@ function FloatingTabBar({ state, navigation }: any) {
   );
 }
 
-/* ── Root Layout ── */
-const SWIPE_DISTANCE_THRESHOLD = 100;
+const renderScene = SceneMap({
+  explore: ExploreScreen,
+  index: HomeScreen,
+  smart: SmartScreen,
+  profile: ProfileScreen,
+});
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const tabStateRef = React.useRef<any>(null);
-  const tabNavigationRef = React.useRef<any>(null);
-
-  const handleSwipeEnd = useCallback((translationX: number) => {
-    const state = tabStateRef.current;
-    const navigation = tabNavigationRef.current;
-
-    if (!state || !navigation) {
-      return;
-    }
-
-    if (
-      translationX < -SWIPE_DISTANCE_THRESHOLD &&
-      state.index < state.routes.length - 1
-    ) {
-      navigation.navigate(state.routes[state.index + 1].name);
-    } else if (translationX > SWIPE_DISTANCE_THRESHOLD && state.index > 0) {
-      navigation.navigate(state.routes[state.index - 1].name);
-    }
-  }, []);
-
-  const gestureTranslationX = React.useRef(0);
-  const gestureTranslationY = React.useRef(0);
-
-  const onGestureEvent = ({ nativeEvent }: any) => {
-    gestureTranslationX.current = nativeEvent.translationX;
-    gestureTranslationY.current = nativeEvent.translationY;
-  };
-
-  const onHandlerStateChange = ({ nativeEvent }: any) => {
-    if (
-      nativeEvent.oldState === State.ACTIVE &&
-      (nativeEvent.state === State.END || nativeEvent.state === State.CANCELLED)
-    ) {
-      const isHorizontal =
-        Math.abs(gestureTranslationX.current) >
-        Math.abs(gestureTranslationY.current);
-      const isLongEnough =
-        Math.abs(gestureTranslationX.current) > SWIPE_DISTANCE_THRESHOLD;
-
-      if (isHorizontal && isLongEnough) {
-        handleSwipeEnd(gestureTranslationX.current);
-      }
-    }
-  };
+  const layout = useWindowDimensions();
+  const [index, setIndex] = useState(1);
+  const [routes] = useState([
+    { key: "explore", title: "Explore" },
+    { key: "index", title: "Home" },
+    { key: "smart", title: "Smart" },
+    { key: "profile", title: "Profile" },
+  ]);
 
   return (
     <TamaguiRoot>
       <AnimatedSplashOverlay />
       <GestureHandlerRootView style={styles.gestureRoot}>
-        <PanGestureHandler
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-          activeOffsetX={[-20, 20]}
-          failOffsetY={[-15, 15]}
-          minPointers={1}
-          maxPointers={1}
-        >
-          <Animated.View style={styles.gestureView}>
-            <Tabs
-              tabBar={(props) => {
-                tabStateRef.current = props.state;
-                tabNavigationRef.current = props.navigation;
-                return <FloatingTabBar {...props} />;
-              }}
-              screenOptions={{ headerShown: false }}
-            >
-              <Tabs.Screen name="explore" />
-              <Tabs.Screen name="index" />
-              <Tabs.Screen name="smart" />
-              <Tabs.Screen name="profile" />
-            </Tabs>
-          </Animated.View>
-        </PanGestureHandler>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          renderTabBar={() => null}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+          swipeEnabled
+          lazy
+          tabBarPosition="bottom"
+        />
+        <FloatingTabBar state={{ index, routes }} setIndex={setIndex} />
       </GestureHandlerRootView>
     </TamaguiRoot>
   );
 }
 
-/* ── Styles ── */
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
@@ -376,8 +313,6 @@ const styles = StyleSheet.create({
   },
   gestureRoot: {
     flex: 1,
-  },
-  gestureView: {
-    flex: 1,
+    backgroundColor: "#0A0A0A",
   },
 });
