@@ -1,0 +1,10 @@
+package com.fezaschools.fezasmart.login_attempt;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+
+public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Integer> {
+
+    LoginAttempt findFirstByUserId(Integer id);
+
+}
