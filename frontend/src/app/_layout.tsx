@@ -95,7 +95,7 @@ function FloatingTabBar({ state, setIndex }: any) {
       case "smart":
         return require("@/assets/images/tabIcons/fezasmart.png");
       case "profile":
-        return require("@/assets/images/tabIcons/user.png");
+        return require("@/assets/images/tabIcons/tool.png");
       default:
         return require("@/assets/images/tabIcons/home.png");
     }
@@ -240,7 +240,7 @@ export default function TabLayout() {
     { key: "explore", title: "Explore" },
     { key: "index", title: "Home" },
     { key: "smart", title: "Smart" },
-    { key: "profile", title: "Profile" },
+    { key: "profile", title: "AI" },
   ]);
 
   const onLayoutRootReady = useCallback(async () => {

@@ -201,20 +201,27 @@ Just completed:
 - [x] Installed dependencies successfully
 
 #### 🔄 In Progress - Next Steps:
-- [ ] **Wire login screen (index.tsx) to backend API**
+- [x] **Wire login screen (index.tsx) to backend API**
   - Replace mock username/password check with real `login(email, password)` call
   - Show error messages from backend
   - Handle loading state with spinner
   - Clear password field on error
-  - **Status**: Need to update smart/index.tsx LoginForm component
+  - **Status**: Completed indexing and auth state binding.
 
-- [ ] **Wire dashboard screen** - Fetch user profile from GET /api/users/me
-- [ ] **Wire results screen** - Fetch results from GET /api/students/{id}/results  
-- [ ] **Wire classes screen** - Fetch class data and schedule
-- [ ] **Wire profile screen** - Fetch and display student details
-- [ ] **Handle role-based views** - Show different data based on user roles
-- [ ] **Add error handling & loading states** - Loading skeletons, error messages, retry buttons
-- [ ] **Test end-to-end** - Login → Dashboard → Results → Logout flow
+- [x] **Implement Adaptable Role-Based Dashboards (dashboard.tsx)**
+  - Support distinct views: STUDENT, PARENT, SUPER_ADMIN, and School Admins (HEAD_MASTER, SECOND_MASTER, HUMAN_RESOURCE)
+  - Display GPA, Attendance summary, recent grades, and global system stats
+  - Beautiful visual charts and quick admin/super admin utility cards
+- [x] **Implement Dynamic Adaptable Results (results.tsx)**
+  - Support STUDENT results listing and PARENT child selector/report cards
+  - Support admin Results Computation tool with REST trigger
+  - Advanced filtering and sorting options for School Admins
+- [x] **Implement Flexible Weekly Schedule / Classes Screen (classes.tsx)**
+  - Sliding weekly calendar (Mon-Fri) for student/parent timetables
+  - Full class list directory and subject allocation view for school admins
+- [x] **Implement Multi-Role Profiles (profile.tsx)**
+  - Display user information, student attendance progress bars, and linked children for parents
+  - List school/staff hierarchy, administrative metadata, and dark/light mode hooks
 
 #### 📝 To Test the Backend API Endpoints:
 

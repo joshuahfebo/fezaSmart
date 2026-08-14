@@ -136,7 +136,7 @@ export default function SmartScreen({
 
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert("Error", "Please enter both username and password");
+      Alert.alert("Error", "Please enter both email and password");
       return;
     }
     setIsLoading(true);
@@ -393,10 +393,11 @@ function LoginForm({
                   colors={colors}
                   mode={mode}
                   icon="person-outline"
-                  placeholder="Username"
+                  placeholder="Email or Username"
                   value={username}
                   onChangeText={setUsername}
                   autoCapitalize="none"
+                  keyboardType="email-address"
                 />
                 <GlassInput
                   colors={colors}
@@ -474,7 +475,7 @@ function LoginForm({
                   textAlign="center"
                   marginTop={-4}
                 >
-                  Sign in with your school username and password
+                  Sign in with your school email and password
                 </Text>
               )}
             </YStack>
