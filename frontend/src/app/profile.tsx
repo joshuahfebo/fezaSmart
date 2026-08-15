@@ -1,17 +1,16 @@
 import { useTheme, useThemeMode, useToggleTheme } from "@/hooks/use-theme";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo} from "react";
 import {
   Animated,
   Dimensions,
   Easing,
   FlatList,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   StyleSheet,
   TextInput,
+  Image,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -20,8 +19,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Text, XStack, YStack } from "tamagui";
-
-const { width: screenWidth } = Dimensions.get("window");
+const { width: screenWidth, height } = Dimensions.get("window");
 
 type Message = {
   id: string;
@@ -48,38 +46,10 @@ const MOCK_RESPONSES = [
 
 /* ── Fezaintelligence Animated Title ── */
 function FezTitle({ colors }: { colors: any }) {
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const [showFull, setShowFull] = useState(true);
-
-  useEffect(() => {
-    const cycle = () => {
-      setShowFull(true);
-      fadeAnim.setValue(1);
-
-      const timer = setTimeout(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 1800,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-          useNativeDriver: true,
-        }).start(() => {
-          setShowFull(false);
-          setTimeout(cycle, 8000);
-        });
-      }, 10000);
-
-      return () => clearTimeout(timer);
-    };
-
-    const cleanup = cycle();
-    return cleanup;
-  }, []);
-
   return (
     <XStack alignItems="baseline" overflow="hidden">
-      <Animated.View
+      <View
         style={{
-          opacity: fadeAnim,
           flexDirection: "row",
         }}
       >
@@ -91,10 +61,9 @@ function FezTitle({ colors }: { colors: any }) {
         >
           Fez
         </Text>
-      </Animated.View>
-      <Animated.View
+      </View>
+      <View
         style={{
-          opacity: showFull ? 1 : 1,
           flexDirection: "row",
         }}
       >
@@ -106,7 +75,7 @@ function FezTitle({ colors }: { colors: any }) {
         >
           aintelligence
         </Text>
-      </Animated.View>
+      </View>
     </XStack>
   );
 }
@@ -339,6 +308,22 @@ export default function ProfileScreen() {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const sendMessage = useCallback(
     (text: string) => {
@@ -380,8 +365,16 @@ export default function ProfileScreen() {
     [sendMessage],
   );
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+  const logoSize = useMemo(() => {
+    const maxWidth = screenWidth * 0.4;
+    const aspect = 180 / 100;
+    return { width: maxWidth, height: maxWidth / aspect };
+  }, [screenWidth]);
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* ── Header ── */}
       <View
         style={[
@@ -392,11 +385,6 @@ export default function ProfileScreen() {
           },
         ]}
       >
-        <BlurView
-          intensity={isDark ? 60 : 40}
-          tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
         <SafeAreaView edges={["top"]}>
           <XStack
             paddingHorizontal="$4"
@@ -404,31 +392,16 @@ export default function ProfileScreen() {
             alignItems="center"
             justifyContent="space-between"
           >
-            <XStack alignItems="center" gap="$3">
-              <View
-                style={[
-                  styles.headerAvatar,
-                  { backgroundColor: colors.primary + "18" },
-                ]}
-              >
-                <Ionicons
-                  name="sparkles"
-                  size={20}
-                  color={colors.primary}
-                />
-              </View>
-              <YStack gap={0}>
-                <FezTitle colors={colors} />
-                <Text
-                  fontSize={11}
-                  color={colors.textTertiary}
-                  fontWeight="500"
-                  letterSpacing={0.3}
-                >
-                  {isTyping ? "Thinking..." : "Online"}
-                </Text>
-              </YStack>
-            </XStack>
+            <XStack alignItems="center" gap="$3">                
+              <Image
+                              source={
+                                mode === "dark"
+                                  ? require("../../assets/images/logoIcons/logoLight.webp")
+                                  : require("../../assets/images/logoIcons/logoDark.png")
+                              }
+                              style={{ width: logoSize.width, height: logoSize.height }}
+                              resizeMode="contain"
+                            /></XStack>
 
             <XStack gap="$3" alignItems="center">
               <TouchableOpacity
@@ -453,15 +426,13 @@ export default function ProfileScreen() {
       </View>
 
       {/* ── Messages ── */}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={100}
-      >
+      <View style={styles.chatArea}>
         <FlatList
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           renderItem={({ item, index }) => (
             <MessageBubble
               message={item}
@@ -493,79 +464,84 @@ export default function ProfileScreen() {
             ) : null
           }
         />
+      </View>
 
-        {/* ── Input Bar ── */}
-        <View
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor: colors.background,
-              borderTopColor: colors.border,
-            },
-          ]}
+      {/* ── Input Bar ── */}
+      <View
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingBottom: keyboardVisible
+              ? 8
+              : 90 + insets.bottom,
+          },
+        ]}
+      >
+        <XStack
+          paddingHorizontal="$3"
+          paddingVertical="$3"
+          alignItems="flex-end"
+          gap="$2"
         >
-          <SafeAreaView edges={["bottom"]}>
-            <XStack
-              paddingHorizontal="$3"
-              paddingVertical="$2"
-              alignItems="flex-end"
-              gap="$2"
-            >
-              <View
-                style={[
-                  styles.inputWrapper,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255,255,255,0.06)"
-                      : "rgba(0,0,0,0.04)",
-                    borderColor: colors.cardBorder,
-                  },
-                ]}
-              >
-                <TextInput
-                  style={[styles.textInput, { color: colors.text }]}
-                  placeholder="Ask Fezaintelligence..."
-                  placeholderTextColor={colors.textTertiary}
-                  value={inputText}
-                  onChangeText={setInputText}
-                  multiline
-                  maxLength={2000}
-                />
-              </View>
+          <View
+            style={[
+              styles.inputWrapper,
+              {
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.06)"
+                  : "rgba(0,0,0,0.04)",
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
+            <TextInput
+              style={[styles.textInput, { color: colors.text }]}
+              placeholder="Ask Fezaintelligence..."
+              placeholderTextColor={colors.textTertiary}
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={2000}
+              blurOnSubmit={false}
+            />
+          </View>
 
-              <TouchableOpacity
-                onPress={() => sendMessage(inputText)}
-                disabled={!inputText.trim()}
-                style={[
-                  styles.sendButton,
-                  {
-                    backgroundColor:
-                      inputText.trim()
-                        ? colors.primary
-                        : isDark
-                          ? "rgba(255,255,255,0.08)"
-                          : "rgba(0,0,0,0.06)",
-                  },
-                ]}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name="arrow-up"
-                  size={20}
-                  color={
-                    inputText.trim() ? "#FFFFFF" : colors.textTertiary
-                  }
-                />
-              </TouchableOpacity>
-            </XStack>
-          </SafeAreaView>
-        </View>
-      </KeyboardAvoidingView>
+          <TouchableOpacity
+            onPress={() => sendMessage(inputText)}
+            disabled={!inputText.trim()}
+            style={[
+              styles.sendButton,
+              {
+                backgroundColor:
+                  inputText.trim()
+                    ? colors.primary
+                    : isDark
+                      ? "rgba(255,255,255,0.08)"
+                      : "rgba(0,0,0,0.06)",
+              },
+            ]}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={20}
+              color={
+                inputText.trim() ? "#FFFFFF" : colors.textTertiary
+              }
+            />
+          </TouchableOpacity>
+        </XStack>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   header: {
     position: "relative",
     overflow: "hidden",
@@ -585,6 +561,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
+  },
+  chatArea: {
+    flex: 1,
   },
   aiAvatar: {
     width: 28,
@@ -618,8 +597,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   inputContainer: {
-    position: "relative",
     borderTopWidth: 0.5,
+    position: "relative",
+    zIndex: 10,
   },
   inputWrapper: {
     flex: 1,

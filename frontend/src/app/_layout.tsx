@@ -95,7 +95,7 @@ function FloatingTabBar({ state, setIndex }: any) {
       case "smart":
         return require("@/assets/images/tabIcons/fezasmart.png");
       case "profile":
-        return require("@/assets/images/tabIcons/tool.png");
+        return require("@/assets/images/tabIcons/ai.png");
       default:
         return require("@/assets/images/tabIcons/home.png");
     }

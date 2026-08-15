@@ -1,6 +1,5 @@
 import { useTheme, useThemeMode } from "@/hooks/use-theme";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect } from "react";
@@ -199,18 +198,13 @@ function SheetContent({
   return (
     <LinearGradient
       colors={[
-        isDark ? "rgba(40,40,46,0.92)" : "rgba(255,255,255,0.92)",
-        isDark ? "rgba(28,28,34,0.92)" : "rgba(245,243,240,0.92)",
+        isDark ? "rgba(40,40,46,0.98)" : "rgba(255,255,255,0.98)",
+        isDark ? "rgba(28,28,34,0.98)" : "rgba(245,243,240,0.98)",
       ]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.sheetGradient}
     >
-      <BlurView
-        intensity={isDark ? 40 : 60}
-        tint={isDark ? "dark" : "light"}
-        style={styles.sheetBlur}
-      >
         <Animated.View style={[styles.headerContainer, headerAnimatedStyle]}>
           <View style={[styles.handleRow, { paddingTop: 8 }]}>
             <View
@@ -351,11 +345,6 @@ function SheetContent({
                   end={{ x: 1, y: 1 }}
                   style={styles.menuItemGradient}
                 >
-                  <BlurView
-                    intensity={isDark ? 16 : 8}
-                    tint={isDark ? "dark" : "light"}
-                    style={styles.menuItemBlur}
-                  >
                     <XStack
                       gap="$4"
                       alignItems="center"
@@ -428,7 +417,6 @@ function SheetContent({
                         />
                       </View>
                     </XStack>
-                  </BlurView>
                 </LinearGradient>
               </Pressable>
             ))}
@@ -459,7 +447,6 @@ function SheetContent({
             </Text>
           </Pressable>
         </Animated.View>
-      </BlurView>
     </LinearGradient>
   );
 }
@@ -608,11 +595,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: SHEET_TOP_RADIUS,
     borderTopRightRadius: SHEET_TOP_RADIUS,
   },
-  sheetBlur: {
-    flex: 1,
-    borderTopLeftRadius: SHEET_TOP_RADIUS,
-    borderTopRightRadius: SHEET_TOP_RADIUS,
-  },
   headerContainer: {
     paddingTop: 8,
   },
@@ -679,10 +661,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   menuItemGradient: {
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-  menuItemBlur: {
     borderRadius: 18,
     overflow: "hidden",
   },
